@@ -15,7 +15,7 @@ export class SessionAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const sessionId = request.header("x-session-id");
     const actor = sessionId ? this.sessions.get(sessionId) : undefined;
-    if (!actor) throw new UnauthorizedException("Unknown or expired session");
+    if (!actor) throw new UnauthorizedException("Unknown session");
     request.actor = actor;
     return true;
   }

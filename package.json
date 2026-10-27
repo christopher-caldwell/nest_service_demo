@@ -14,18 +14,13 @@
     "credentials": "node scripts/credentials.cjs",
     "demo": "node scripts/demo.cjs",
     "test": "jest --runInBand",
-    "typecheck": "tsc --noEmit",
-    "test:group-1": "jest --runInBand group-1 shared.service",
-    "test:group-2": "jest --runInBand group-2 feature.service"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.8",
     "@nestjs/core": "^11.2.8",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.2.8",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.2",
-    "dotenv": "^17.2.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
@@ -48,9 +43,6 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/test/no-live-provider.setup.ts"
-    ],
     "testMatch": [
       "<rootDir>/test/**/*.spec.ts"
     ],

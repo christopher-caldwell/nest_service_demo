@@ -16,12 +16,8 @@ import { StaticTokenAuthGuard } from "./static-token-auth.guard";
       provide: SessionService,
       useFactory: () => {
         const sessions = new SessionService();
-        // Demo provisioning belongs to startup wiring, not the cache implementation.
-        sessions.set(
-          demoConfig.sessionId,
-          { id: demoConfig.actorId },
-          60 * 60 * 1000,
-        );
+        // Seed one session for the demo.
+        sessions.set(demoConfig.sessionId, { id: demoConfig.actorId });
         return sessions;
       },
     },

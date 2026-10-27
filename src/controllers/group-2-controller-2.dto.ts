@@ -1,8 +1,4 @@
-import { IsInt, Min } from "class-validator";
-
 export class Group2Controller2RequestDto {
-  @IsInt()
-  @Min(0)
   input_value!: number;
 }
 

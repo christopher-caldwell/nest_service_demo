@@ -1,4 +1,4 @@
-import { Logger, Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { SharedService } from "../business/group-1/shared.service";
 import { Group1Controller1 } from "../controllers/group-1-controller-1.controller";
@@ -8,14 +8,6 @@ import { Group1Controller3 } from "../controllers/group-1-controller-3.controlle
 @Module({
   imports: [AuthModule],
   controllers: [Group1Controller1, Group1Controller2, Group1Controller3],
-  providers: [
-    {
-      provide: SharedService,
-      useFactory: () => {
-        const logger = new Logger(SharedService.name);
-        return new SharedService((message) => logger.log(message));
-      },
-    },
-  ],
+  providers: [SharedService],
 })
 export class Group1Module {}

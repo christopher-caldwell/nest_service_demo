@@ -1,12 +1,8 @@
-import "dotenv/config";
-
-// Deliberately public demo credentials; no login controller is needed.
+// Shared demo credentials for the app and scripts.
 export const demoConfig = {
-  port: Number(process.env.PORT ?? 3000),
-  jwtSecret: process.env.JWT_SECRET ?? "demo-only-jwt-secret-change-me",
-  jwtIssuer: "controller-mapping-demo",
-  jwtAudience: "demo-api",
-  staticToken: process.env.STATIC_AUTH_TOKEN ?? "demo-static-token",
-  sessionId: process.env.DEMO_SESSION_ID ?? "demo-session",
+  port: 3000,
+  jwtSecret: "demo-only-jwt-secret",
+  staticToken: "demo-static-token",
+  sessionId: "demo-session",
   actorId: "demo-user",
 };
