@@ -6,43 +6,34 @@ async function main() {
   const auth = credentials();
   const examples = [
     {
-      path: "jwt/orders",
+      path: "group-1/controller-1",
       headers: { Authorization: `Bearer ${auth.jwt}` },
-      body: { customerName: "Ada", items: [{ sku: "BOOK", quantity: 2 }] },
+      body: { name: "demo", items: [{ code: "A", value: 2 }] },
     },
     {
-      path: "session/orders",
+      path: "group-1/controller-2",
       headers: { "X-Session-Id": auth.sessionId },
-      body: { buyerName: "Ada", basket: [{ productCode: "BOOK", units: 2 }] },
+      body: { label: "demo", entries: [{ key: "A", amount: 2 }] },
     },
     {
-      path: "partner/orders",
+      path: "group-1/controller-3",
       headers: { "X-Api-Token": auth.staticToken },
       body: {
-        customer_name: "Ada",
-        lines: [{ product_code: "BOOK", count: 2 }],
+        display_name: "demo",
+        values: [{ item_code: "A", item_value: 2 }],
       },
     },
     {
-      path: "checkout/shipping-quotes",
+      path: "group-2/controller-1",
       headers: { Authorization: `Bearer ${auth.jwt}` },
-      body: {
-        destinationCountry: "US",
-        weightGrams: 1500,
-        orderSubtotalCents: 5000,
-      },
+      body: { value: 5 },
     },
     {
-      path: "partner/shipping-quotes",
+      path: "group-2/controller-2",
       headers: { "X-Api-Token": auth.staticToken },
-      body: {
-        destination_country: "US",
-        package_weight_grams: 1500,
-        order_value_cents: 5000,
-      },
+      body: { input_value: 5 },
     },
   ];
-
   for (const example of examples) {
     const response = await fetch(
       `http://127.0.0.1:${demoConfig.port}/${example.path}`,
@@ -58,10 +49,9 @@ async function main() {
     console.log(JSON.stringify(result, null, 2));
   }
 }
-
 main().catch((error) => {
   console.error(
-    "Demo failed. Build the app and start it in another terminal first.",
+    "Build the app and start it in another terminal before running the demo.",
   );
   console.error(error);
   process.exitCode = 1;

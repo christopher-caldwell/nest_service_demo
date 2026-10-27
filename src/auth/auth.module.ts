@@ -3,7 +3,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { demoConfig } from "./demo-config";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { SessionAuthGuard } from "./session-auth.guard";
-import { SessionCacheService } from "./session-cache.service";
+import { SessionService } from "./session.service";
 import { StaticTokenAuthGuard } from "./static-token-auth.guard";
 
 @Module({
@@ -13,9 +13,9 @@ import { StaticTokenAuthGuard } from "./static-token-auth.guard";
     SessionAuthGuard,
     StaticTokenAuthGuard,
     {
-      provide: SessionCacheService,
+      provide: SessionService,
       useFactory: () => {
-        const sessions = new SessionCacheService();
+        const sessions = new SessionService();
         // Demo provisioning belongs to startup wiring, not the cache implementation.
         sessions.set(
           demoConfig.sessionId,
@@ -28,7 +28,7 @@ import { StaticTokenAuthGuard } from "./static-token-auth.guard";
   ],
   exports: [
     JwtModule,
-    SessionCacheService,
+    SessionService,
     JwtAuthGuard,
     SessionAuthGuard,
     StaticTokenAuthGuard,

@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { OrdersModule } from "./composition/orders.module";
-import { ShippingModule } from "./composition/shipping.module";
+import { Group1Module } from "./composition/group-1.module";
+import { Group2Module } from "./composition/group-2.module";
 
-@Module({ imports: [OrdersModule, ShippingModule] })
+@Module({ imports: [Group1Module, Group2Module] })
 export class AppModule {}

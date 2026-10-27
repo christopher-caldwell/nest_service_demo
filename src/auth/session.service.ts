@@ -7,7 +7,7 @@ interface CachedSession {
 }
 
 @Injectable()
-export class SessionCacheService {
+export class SessionService {
   private readonly sessions = new Map<string, CachedSession>();
 
   set(sessionId: string, actor: Actor, ttlMs: number): void {

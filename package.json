@@ -14,8 +14,9 @@
     "credentials": "node scripts/credentials.cjs",
     "demo": "node scripts/demo.cjs",
     "test": "jest --runInBand",
-    "test:shipping": "jest --runInBand shipping",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:group-1": "jest --runInBand group-1 shared.service",
+    "test:group-2": "jest --runInBand group-2 feature.service"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.8",

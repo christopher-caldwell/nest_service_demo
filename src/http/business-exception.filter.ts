@@ -1,12 +1,12 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from "@nestjs/common";
 import type { Response } from "express";
 import { InvalidBusinessInputError } from "../business/business-errors";
-import { ShippingRateUnavailableError } from "../business/shipping/shipping-rate.port";
+import { ProviderError } from "../business/group-2/provider.port";
 
-@Catch(InvalidBusinessInputError, ShippingRateUnavailableError)
+@Catch(InvalidBusinessInputError, ProviderError)
 export class BusinessExceptionFilter implements ExceptionFilter {
   catch(
-    error: InvalidBusinessInputError | ShippingRateUnavailableError,
+    error: InvalidBusinessInputError | ProviderError,
     host: ArgumentsHost,
   ): void {
     const isInvalidInput = error instanceof InvalidBusinessInputError;
@@ -19,9 +19,7 @@ export class BusinessExceptionFilter implements ExceptionFilter {
         statusCode,
         error: isInvalidInput ? "Bad Request" : "Bad Gateway",
         // Never serialize provider errors, causes, stack traces, or SDK payloads.
-        message: isInvalidInput
-          ? error.message
-          : "Shipping rates are temporarily unavailable",
+        message: isInvalidInput ? error.message : "Provider unavailable",
       });
   }
 }

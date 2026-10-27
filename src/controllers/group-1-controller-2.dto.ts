@@ -10,34 +10,34 @@ import {
   ValidateNested,
 } from "class-validator";
 
-export class SessionBasketItemDto {
+export class Group1Controller2ItemDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/\S/)
-  productCode!: string;
+  key!: string;
 
   @IsInt()
   @Min(1)
-  units!: number;
+  amount!: number;
 }
 
-export class SessionCreateOrderDto {
+export class Group1Controller2RequestDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/\S/)
-  buyerName!: string;
+  label!: string;
 
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @Type(() => SessionBasketItemDto)
-  basket!: SessionBasketItemDto[];
+  @Type(() => Group1Controller2ItemDto)
+  entries!: Group1Controller2ItemDto[];
 }
 
-export class SessionOrderResponseDto {
-  confirmation!: string;
-  buyer!: string;
+export class Group1Controller2ResponseDto {
+  reference!: string;
+  label!: string;
   accepted!: boolean;
-  totalUnits!: number;
-  basket!: { lineReference: string; productCode: string; units: number }[];
+  total!: number;
+  entries!: { reference: string; key: string; amount: number }[];
 }

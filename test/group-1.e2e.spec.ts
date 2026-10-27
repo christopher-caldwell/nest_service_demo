@@ -3,51 +3,51 @@ import { INestApplication } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { OrdersModule } from "../src/composition/orders.module";
+import { Group1Module } from "../src/composition/group-1.module";
 import { configureApp } from "../src/configure-app";
 import { demoConfig } from "../src/auth/demo-config";
-import { SessionCacheService } from "../src/auth/session-cache.service";
-import { OrdersService } from "../src/business/orders.service";
+import { SessionService } from "../src/auth/session.service";
+import { SharedService } from "../src/business/group-1/shared.service";
 
-describe("Three controllers → one business service", () => {
+describe("Group 1 controllers → SharedService", () => {
   let app: INestApplication;
   let jwt: JwtService;
-  let service: OrdersService;
-  let sessions: SessionCacheService;
+  let service: SharedService;
+  let sessions: SessionService;
   let token: string;
 
-  const jwtBody = {
-    customerName: "Ada",
+  const body1 = {
+    name: "demo",
     items: [
-      { sku: "BOOK", quantity: 2 },
-      { sku: "PEN", quantity: 3 },
+      { code: "A", value: 2 },
+      { code: "B", value: 3 },
     ],
   };
-  const sessionBody = {
-    buyerName: "Ada",
-    basket: [
-      { productCode: "BOOK", units: 2 },
-      { productCode: "PEN", units: 3 },
+  const body2 = {
+    label: "demo",
+    entries: [
+      { key: "A", amount: 2 },
+      { key: "B", amount: 3 },
     ],
   };
-  const partnerBody = {
-    customer_name: "Ada",
-    lines: [
-      { product_code: "BOOK", count: 2 },
-      { product_code: "PEN", count: 3 },
+  const body3 = {
+    display_name: "demo",
+    values: [
+      { item_code: "A", item_value: 2 },
+      { item_code: "B", item_value: 3 },
     ],
   };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      imports: [OrdersModule],
+      imports: [Group1Module],
     }).compile();
     app = module.createNestApplication({ logger: false });
     configureApp(app);
     await app.init();
     jwt = app.get(JwtService);
-    service = app.get(OrdersService);
-    sessions = app.get(SessionCacheService);
+    service = app.get(SharedService);
+    sessions = app.get(SessionService);
     token = signToken();
   });
 
@@ -73,28 +73,28 @@ describe("Three controllers → one business service", () => {
   function clients() {
     return [
       {
-        path: "/jwt/orders",
+        path: "/group-1/controller-1",
         header: "Authorization",
         credential: `Bearer ${token}`,
-        body: jwtBody,
+        body: body1,
       },
       {
-        path: "/session/orders",
+        path: "/group-1/controller-2",
         header: "X-Session-Id",
         credential: demoConfig.sessionId,
-        body: sessionBody,
+        body: body2,
       },
       {
-        path: "/partner/orders",
+        path: "/group-1/controller-3",
         header: "X-Api-Token",
         credential: demoConfig.staticToken,
-        body: partnerBody,
+        body: body3,
       },
     ];
   }
 
   it("maps different inputs to one command and maps both real entities to distinct responses", async () => {
-    const spy = jest.spyOn(service, "createOrder"); // Calls through to the real service.
+    const spy = jest.spyOn(service, "execute"); // Calls through to the real service.
     const responses = [];
     for (const client of clients()) {
       const response = await request(app.getHttpServer())
@@ -109,71 +109,71 @@ describe("Three controllers → one business service", () => {
     for (const [command] of spy.mock.calls) {
       expect(command).toEqual({
         actorId: demoConfig.actorId,
-        customerName: "Ada",
+        name: "demo",
         items: [
-          { sku: "BOOK", quantity: 2 },
-          { sku: "PEN", quantity: 3 },
+          { code: "A", value: 2 },
+          { code: "B", value: 3 },
         ],
       });
     }
 
-    const [jwtResult, sessionResult, partnerResult] = spy.mock.results.map(
+    const [result1, result2, result3] = spy.mock.results.map(
       (result) => result.value,
     );
     expect(responses[0]).toEqual({
-      order: {
-        id: jwtResult.entityOne.id,
-        customerName: "Ada",
+      result: {
+        id: result1.entityOne.id,
+        name: "demo",
         status: "accepted",
-        totalQuantity: 5,
-        items: jwtResult.entityTwos.map(
-          (line: { id: string; sku: string; quantity: number }) => ({
+        total: 5,
+        items: result1.entityTwos.map(
+          (line: { id: string; code: string; value: number }) => ({
             id: line.id,
-            sku: line.sku,
-            quantity: line.quantity,
+            code: line.code,
+            value: line.value,
           }),
         ),
       },
     });
     expect(responses[1]).toEqual({
-      confirmation: sessionResult.entityOne.id,
-      buyer: "Ada",
+      reference: result2.entityOne.id,
+      label: "demo",
       accepted: true,
-      totalUnits: 5,
-      basket: sessionResult.entityTwos.map(
-        (line: { id: string; sku: string; quantity: number }) => ({
-          lineReference: line.id,
-          productCode: line.sku,
-          units: line.quantity,
+      total: 5,
+      entries: result2.entityTwos.map(
+        (line: { id: string; code: string; value: number }) => ({
+          reference: line.id,
+          key: line.code,
+          amount: line.value,
         }),
       ),
     });
     expect(responses[2]).toEqual({
-      order_ref: partnerResult.entityOne.id,
-      customer_name: "Ada",
+      result_id: result3.entityOne.id,
+      display_name: "demo",
       state: "ACCEPTED",
-      total_units: 5,
-      line_items: partnerResult.entityTwos.map(
-        (line: { id: string; sku: string; quantity: number }) => ({
-          line_ref: line.id,
-          product_code: line.sku,
-          count: line.quantity,
+      total_value: 5,
+      values: result3.entityTwos.map(
+        (line: { id: string; code: string; value: number }) => ({
+          item_id: line.id,
+          item_code: line.code,
+          item_value: line.value,
         }),
       ),
     });
-    for (const result of [jwtResult, sessionResult, partnerResult]) {
+    for (const result of [result1, result2, result3]) {
       expect(result.entityOne.createdBy).toBe(demoConfig.actorId);
       expect(result.entityOne.id).toEqual(expect.any(String));
       expect(result.entityTwos).toHaveLength(2);
-      expect(result.entityTwos[0].sku).toBe("BOOK");
-      expect(result.entityTwos[1].quantity).toBe(3);
+      expect(result.entityTwos[0].code).toBe("A");
+      expect(result.entityTwos[1].value).toBe(3);
       for (const line of result.entityTwos)
-        expect(line.orderId).toBe(result.entityOne.id);
+        expect(line.entityOneId).toBe(result.entityOne.id);
     }
   });
 
   it("rejects missing and invalid credentials before calling the business service", async () => {
-    const spy = jest.spyOn(service, "createOrder");
+    const spy = jest.spyOn(service, "execute");
     for (const client of clients()) {
       await request(app.getHttpServer())
         .post(client.path)
@@ -189,7 +189,7 @@ describe("Three controllers → one business service", () => {
   });
 
   it("does not accept one controller’s credentials on another controller", async () => {
-    const spy = jest.spyOn(service, "createOrder");
+    const spy = jest.spyOn(service, "execute");
     for (const client of clients()) {
       for (const other of clients().filter(
         (candidate) => candidate.path !== client.path,
@@ -234,9 +234,9 @@ describe("Three controllers → one business service", () => {
     ];
     for (const invalid of invalidTokens) {
       await request(app.getHttpServer())
-        .post("/jwt/orders")
+        .post("/group-1/controller-1")
         .set("Authorization", `Bearer ${invalid}`)
-        .send(jwtBody)
+        .send(body1)
         .expect(401);
     }
   });
@@ -247,66 +247,66 @@ describe("Three controllers → one business service", () => {
     sessions.delete("deleted");
     for (const sessionId of ["expired", "deleted"]) {
       await request(app.getHttpServer())
-        .post("/session/orders")
+        .post("/group-1/controller-2")
         .set("X-Session-Id", sessionId)
-        .send(sessionBody)
+        .send(body2)
         .expect(401);
     }
     expect(sessions.get("expired")).toBeUndefined();
   });
 
   it("gets the actor from verified credentials rather than client request fields", async () => {
-    const spy = jest.spyOn(service, "createOrder");
+    const spy = jest.spyOn(service, "execute");
     sessions.set("another-user-session", { id: "session-user-42" }, 60_000);
     await request(app.getHttpServer())
-      .post("/session/orders")
+      .post("/group-1/controller-2")
       .set("X-Session-Id", "another-user-session")
-      .send(sessionBody)
+      .send(body2)
       .expect(201);
     expect(spy).toHaveBeenLastCalledWith(
       expect.objectContaining({ actorId: "session-user-42" }),
     );
     await request(app.getHttpServer())
-      .post("/jwt/orders")
+      .post("/group-1/controller-1")
       .set("Authorization", `Bearer ${signToken({ sub: "jwt-user-42" })}`)
-      .send(jwtBody)
+      .send(body1)
       .expect(201);
     expect(spy).toHaveBeenLastCalledWith(
       expect.objectContaining({ actorId: "jwt-user-42" }),
     );
   });
 
-  it("validates each contract including nested quantities, empty arrays, and extra fields", async () => {
-    const spy = jest.spyOn(service, "createOrder");
+  it("validates each contract including nested values, empty arrays, and extra fields", async () => {
+    const spy = jest.spyOn(service, "execute");
     const malformedBodies = [
       [
         {},
-        { ...jwtBody, items: [] },
-        { ...jwtBody, items: [{ sku: "BOOK", quantity: 0 }] },
-        { ...jwtBody, items: [{ sku: "BOOK", quantity: "2" }] },
-        { ...jwtBody, items: [{ sku: " ", quantity: 2 }] },
-        { ...jwtBody, customerName: " " },
-        { ...jwtBody, actorId: "spoofed" },
-        { ...jwtBody, items: [{ sku: "BOOK", quantity: 2, secret: true }] },
-        sessionBody,
+        { ...body1, items: [] },
+        { ...body1, items: [{ code: "A", value: 0 }] },
+        { ...body1, items: [{ code: "A", value: "2" }] },
+        { ...body1, items: [{ code: " ", value: 2 }] },
+        { ...body1, name: " " },
+        { ...body1, actorId: "spoofed" },
+        { ...body1, items: [{ code: "A", value: 2, secret: true }] },
+        body2,
       ],
       [
         {},
-        { ...sessionBody, basket: [] },
-        { ...sessionBody, basket: [{ productCode: "BOOK", units: -1 }] },
-        { ...sessionBody, basket: [{ productCode: "BOOK", units: 1.5 }] },
-        { ...sessionBody, buyerName: "" },
-        { ...sessionBody, extra: true },
-        jwtBody,
+        { ...body2, entries: [] },
+        { ...body2, entries: [{ key: "A", amount: -1 }] },
+        { ...body2, entries: [{ key: "A", amount: 1.5 }] },
+        { ...body2, label: "" },
+        { ...body2, extra: true },
+        body1,
       ],
       [
         {},
-        { ...partnerBody, lines: [] },
-        { ...partnerBody, lines: [{ product_code: "BOOK", count: 0 }] },
-        { ...partnerBody, lines: [{ product_code: "", count: 2 }] },
-        { ...partnerBody, customer_name: " " },
-        { ...partnerBody, extra: true },
-        jwtBody,
+        { ...body3, values: [] },
+        { ...body3, values: [{ item_code: "A", item_value: 0 }] },
+        { ...body3, values: [{ item_code: "", item_value: 2 }] },
+        { ...body3, display_name: " " },
+        { ...body3, extra: true },
+        body1,
       ],
     ];
     for (const [index, client] of clients().entries()) {
