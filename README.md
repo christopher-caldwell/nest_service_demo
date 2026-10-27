@@ -4,6 +4,46 @@ Three controllers with different DTOs and authentication methods call the same `
 
 Two more controllers share `ShippingQuotesService`, which depends on a provider port. A local `test` adapter lets you test the actual business rules without paying for provider calls; a simulated `live` adapter shows where the external integration would go. There are five controllers total and two business services.
 
+## The seams to show your teammate
+
+| Layer                 | Owns                                                                        | Depends on                                    |
+| --------------------- | --------------------------------------------------------------------------- | --------------------------------------------- |
+| `controllers/`        | Each API's request/response DTOs and explicit mappings                      | Auth identity, business commands and services |
+| `auth/`               | Credential verification, cached sessions, normalized `{ id }` identity      | Nest/HTTP and demo configuration              |
+| `business/`           | Commands, entities, value invariants, pricing rules, provider port          | Its own types and Node built-ins              |
+| `providers/shipping/` | Vendor request/response mapping, vendor failure translation, local fixtures | The business-owned provider port              |
+| `http/`               | Business-error to HTTP-status translation                                   | Business error types                          |
+| `composition/`        | Nest modules, factories, and the commented adapter switch                   | The concrete pieces it connects               |
+
+The business services are plain TypeScript classes with no Nest decorators, HTTP DTOs, auth implementations, or concrete adapter imports. API DTOs define their own contracts. The shipping port defines normalized rates in USD cents; vendor field names never reach the service.
+
+The two mappings around the shipping service have separate jobs:
+
+```text
+API DTO → controller → business command
+                         ↓
+                 ShippingQuotesService → provider port
+                                           ↑ implements
+                                    live / test adapter
+                                           ↕
+                               vendor DTOs / local fixtures
+
+business result → controller → API response DTO
+business error  → HTTP filter → HTTP error response
+```
+
+Start the walkthrough with a controller, follow its command into the service, then open [the shipping module](src/composition/shipping.module.ts). Its factory supplies the selected adapter to the plain service's constructor:
+
+```ts
+{
+  provide: ShippingQuotesService,
+  inject: [SHIPPING_RATE_PROVIDER],
+  useFactory: (provider: ShippingRateProvider) => new ShippingQuotesService(provider),
+}
+```
+
+The [auth module](src/auth/auth.module.ts) provisions the demo session at startup. `SessionCacheService` itself starts empty and only manages cached sessions. Both feature modules import the same auth module, so they share its cache.
+
 ## Run it
 
 Uses NestJS 11 and TypeScript. Requires Node.js 22.14+ and npm.
@@ -189,11 +229,13 @@ The port supplies a carrier rate and delivery estimate. The service owns these b
 - At an order subtotal of 10,000 cents ($100) or more, waive both the carrier rate and handling fee.
 - Return the final customer charge and a breakdown whose signed amounts sum to that charge.
 
+The service rejects invalid commands before requesting a rate, then verifies the normalized provider result's currency and numeric constraints before pricing the quote. Adapters translate vendor exceptions into `ShippingRateUnavailableError`; the [HTTP filter](src/http/business-exception.filter.ts) alone decides that this becomes a `502` response. Business code never throws Nest HTTP exceptions.
+
 All amounts are integer USD cents, including Canadian destination fixtures. Countries are limited to `US` and `CA` to keep the example small. The local adapter returns fixed rates independent of package weight: 500 cents / 3 days for US and 1,000 cents / 7 days for CA.
 
 ### Switch adapters here
 
-Open **[src/shipping/shipping-provider.binding.ts](src/shipping/shipping-provider.binding.ts)**. Keep exactly one `useClass` line uncommented:
+Open **[src/composition/shipping-provider.binding.ts](src/composition/shipping-provider.binding.ts)**. Keep exactly one `useClass` line uncommented:
 
 ```ts
 export const shippingProviderBinding: ClassProvider<ShippingRateProvider> = {
@@ -204,9 +246,9 @@ export const shippingProviderBinding: ClassProvider<ShippingRateProvider> = {
 };
 ```
 
-Rebuild and restart after switching (`npm run start:dev` restarts automatically). Both adapters implement the same [port](src/shipping/shipping-rate.port.ts). The service and controllers stay the same.
+Rebuild and restart after switching (`npm run start:dev` restarts automatically). Both adapters implement the same [port](src/business/shipping/shipping-rate.port.ts). The service and controllers stay the same.
 
-The [live adapter](src/shipping/adapters/live-shipping-rate.adapter.ts) logs a simulated outbound request and maps a vendor-shaped response into our port contract. It makes no network call and requires no credentials. In a real app, put the vendor SDK/HTTP call there. With the same US request below, simulated live mode returns a 925-cent carrier rate plus the 200-cent handling fee, for a total of 1,125 cents.
+The [live adapter](src/providers/shipping/live-shipping-rate.adapter.ts) logs a simulated outbound request and maps a vendor-shaped response into our port contract. It makes no network call and requires no credentials. In a real app, put the vendor SDK/HTTP call there. With the same US request below, simulated live mode returns a 925-cent carrier rate plus the 200-cent handling fee, for a total of 1,125 cents.
 
 ### Different DTOs, same service
 
@@ -272,7 +314,13 @@ Change the subtotal to `10000` in either request: the service returns a zero cus
 npm run test:shipping
 ```
 
-[Service tests](test/shipping.service.spec.ts) instantiate the **real business service** with `TestShippingRateAdapter`. They check handling fees, the exact free-shipping threshold, different provider rates, breakdown totals, and failure propagation. They do not mock `ShippingQuotesService` or precompute its business result.
+[Service tests](test/shipping.service.spec.ts) instantiate the **real business service** with `TestShippingRateAdapter`. They check handling fees, the exact free-shipping threshold, different provider rates, breakdown totals, and failure propagation. They construct the service directly without a Nest container. They do not mock `ShippingQuotesService` or precompute its business result.
+
+```ts
+const provider = new TestShippingRateAdapter();
+const service = new ShippingQuotesService(provider);
+const result = await service.createQuote(command);
+```
 
 [HTTP tests](test/shipping.e2e.spec.ts) run both real controllers, guards, validation, and the real service. They explicitly replace the provider token:
 
@@ -283,13 +331,15 @@ const module = await Test.createTestingModule({ imports: [AppModule] })
   .compile();
 ```
 
-This override stays local even if you change the application's binding to live. The tests check the injected adapter and assert that the live adapter is never called. Only the external boundary is substituted; the internal logic you want confidence in still executes.
+This override stays local even if you change the application's binding to live. The tests check the injected adapter and assert that the live adapter is never constructed. A shared Jest setup replaces the live adapter module with a constructor that throws before any vendor code can run. Only the external boundary is substituted; the internal logic you want confidence in still executes.
+
+[Architecture checks](test/architecture.spec.ts) also prevent business code from importing Nest or outer layers, keep API DTOs independent of business/provider types, and keep concrete provider selection out of controllers and services. [Order service tests](test/orders.service.spec.ts) demonstrate the same direct construction for the original example.
 
 ## Scope and checks
 
 This is a local teaching app: credentials are public demo values, sessions are held in one process, and orders are logged and returned without persistence. Credentials are provisioned locally instead of through additional login endpoints. Both shipping adapters are cost-free demo implementations. Every order or quote call creates new IDs, so IDs differ between examples.
 
-Request validation rejects unknown fields, blank names or product codes, empty item arrays, and quantities that are not positive integers. Invalid requests return `400`; missing, invalid, or expired credentials return `401` before the business service runs.
+Request validation checks API field names, types, and nested DTOs. The plain business services also enforce their value invariants for typed callers such as jobs or scripts. Invalid requests or business inputs return `400`; missing, invalid, or expired credentials return `401`. Provider failures use a business-owned error that the HTTP filter translates into `502` with a stable message; vendor details and causes stay internal.
 
 The order HTTP tests exercise the original three real controllers and their shared service, compare normalized commands and response mappings, and cover credential isolation, JWT failures, session expiry/deletion, trusted actor identity, and nested DTO validation. The shipping tests add the provider-port example described above.
 

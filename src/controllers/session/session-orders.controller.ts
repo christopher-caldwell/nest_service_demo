@@ -1,5 +1,6 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { Actor, CurrentActor } from "../../auth/current-actor";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
 import { SessionAuthGuard } from "../../auth/session-auth.guard";
 import { OrdersService } from "../../business/orders.service";
 import {

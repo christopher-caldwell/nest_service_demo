@@ -6,10 +6,13 @@ import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/configure-app";
 import { demoConfig } from "../src/auth/demo-config";
-import { ShippingQuotesService } from "../src/shipping/shipping-quotes.service";
-import { SHIPPING_RATE_PROVIDER } from "../src/shipping/shipping-rate.port";
-import { TestShippingRateAdapter } from "../src/shipping/adapters/test-shipping-rate.adapter";
-import { LiveShippingRateAdapter } from "../src/shipping/adapters/live-shipping-rate.adapter";
+import { ShippingQuotesService } from "../src/business/shipping/shipping-quotes.service";
+import {
+  SHIPPING_RATE_PROVIDER,
+  ShippingRateUnavailableError,
+} from "../src/business/shipping/shipping-rate.port";
+import { TestShippingRateAdapter } from "../src/providers/shipping/test-shipping-rate.adapter";
+import { LiveShippingRateAdapter } from "../src/providers/shipping/live-shipping-rate.adapter";
 
 describe("Two shipping controllers → real service → local provider", () => {
   let app: INestApplication;
@@ -73,11 +76,23 @@ describe("Two shipping controllers → real service → local provider", () => {
     ];
   }
 
+  it("fails before constructing live provider code if a test forgets its local override", async () => {
+    await expect(
+      Test.createTestingModule({
+        providers: [
+          {
+            provide: SHIPPING_RATE_PROVIDER,
+            useClass: LiveShippingRateAdapter,
+          },
+        ],
+      }).compile(),
+    ).rejects.toThrow("Live provider construction is forbidden in tests");
+  });
+
   it("runs both DTO mappings through the same real business rules without calling live", async () => {
     expect(app.get(SHIPPING_RATE_PROVIDER)).toBeInstanceOf(
       TestShippingRateAdapter,
     );
-    const liveCall = jest.spyOn(LiveShippingRateAdapter.prototype, "getRate");
     const serviceCall = jest.spyOn(service, "createQuote"); // Calls through; no mocked business result.
     const responses = [];
     for (const client of clients()) {
@@ -98,7 +113,7 @@ describe("Two shipping controllers → real service → local provider", () => {
         orderSubtotalCents: 5000,
       });
     }
-    expect(liveCall).not.toHaveBeenCalled();
+    expect(LiveShippingRateAdapter).not.toHaveBeenCalled();
     expect(responses[0]).toEqual({
       quote: {
         id: expect.any(String),
@@ -147,6 +162,44 @@ describe("Two shipping controllers → real service → local provider", () => {
     expect(partner.body.shipping_charge_cents).toBe(0);
     expect(partner.body.shipping_waived).toBe(true);
     expect(partner.body.charge_lines[2].value_cents).toBe(-700);
+  });
+
+  it("translates the port's failure contract at the HTTP boundary without exposing vendor details", async () => {
+    const adapter = app.get<TestShippingRateAdapter>(SHIPPING_RATE_PROVIDER);
+    jest.spyOn(adapter, "getRate").mockRejectedValue(
+      new ShippingRateUnavailableError({
+        cause: new Error("vendor SDK payload and private credentials"),
+      }),
+    );
+    for (const client of clients()) {
+      const response = await request(app.getHttpServer())
+        .post(client.path)
+        .set(client.header, client.credential)
+        .send(client.body)
+        .expect(502);
+      expect(response.body).toEqual({
+        statusCode: 502,
+        error: "Bad Gateway",
+        message: "Shipping rates are temporarily unavailable",
+      });
+    }
+  });
+
+  it("translates a business invariant failure and avoids a provider call", async () => {
+    const adapter = app.get<TestShippingRateAdapter>(SHIPPING_RATE_PROVIDER);
+    const providerCall = jest.spyOn(adapter, "getRate");
+    const response = await request(app.getHttpServer())
+      .post("/checkout/shipping-quotes")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        ...checkoutBody,
+        orderSubtotalCents: Number.MAX_SAFE_INTEGER + 1,
+      })
+      .expect(400);
+    expect(response.body.message).toBe(
+      "Subtotal must be a nonnegative safe integer",
+    );
+    expect(providerCall).not.toHaveBeenCalled();
   });
 
   it("rejects unauthenticated and malformed requests before calling the service", async () => {

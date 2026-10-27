@@ -1,9 +1,6 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 import type { Request } from "express";
-
-export interface Actor {
-  id: string;
-}
+import type { Actor } from "./actor";
 
 export type AuthenticatedRequest = Request & { actor: Actor };
 

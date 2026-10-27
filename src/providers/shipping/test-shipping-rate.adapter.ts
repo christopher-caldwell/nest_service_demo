@@ -1,11 +1,9 @@
-import { Injectable } from "@nestjs/common";
 import {
   ShippingRate,
   ShippingRateProvider,
   ShippingRateRequest,
-} from "../shipping-rate.port";
+} from "../../business/shipping/shipping-rate.port";
 
-@Injectable()
 export class TestShippingRateAdapter implements ShippingRateProvider {
   async getRate(request: ShippingRateRequest): Promise<ShippingRate> {
     // Fixed local fixtures, independent of weight. No network, SDK, or credentials.
@@ -13,8 +11,18 @@ export class TestShippingRateAdapter implements ShippingRateProvider {
       ShippingRateRequest["destinationCountry"],
       ShippingRate
     > = {
-      US: { carrier: "test-carrier", costCents: 500, estimatedDays: 3 },
-      CA: { carrier: "test-carrier", costCents: 1_000, estimatedDays: 7 },
+      US: {
+        carrier: "test-carrier",
+        currency: "USD",
+        costCents: 500,
+        estimatedDays: 3,
+      },
+      CA: {
+        carrier: "test-carrier",
+        currency: "USD",
+        costCents: 1_000,
+        estimatedDays: 7,
+      },
     };
     return { ...fixtures[request.destinationCountry] };
   }

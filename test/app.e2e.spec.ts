@@ -3,7 +3,7 @@ import { INestApplication } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
+import { OrdersModule } from "../src/composition/orders.module";
 import { configureApp } from "../src/configure-app";
 import { demoConfig } from "../src/auth/demo-config";
 import { SessionCacheService } from "../src/auth/session-cache.service";
@@ -40,7 +40,7 @@ describe("Three controllers → one business service", () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [OrdersModule],
     }).compile();
     app = module.createNestApplication({ logger: false });
     configureApp(app);

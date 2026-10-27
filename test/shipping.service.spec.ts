@@ -1,28 +1,24 @@
-import "reflect-metadata";
-import { Test, TestingModule } from "@nestjs/testing";
-import { ShippingQuotesService } from "../src/shipping/shipping-quotes.service";
-import { SHIPPING_RATE_PROVIDER } from "../src/shipping/shipping-rate.port";
-import { TestShippingRateAdapter } from "../src/shipping/adapters/test-shipping-rate.adapter";
+import { ShippingQuotesService } from "../src/business/shipping/shipping-quotes.service";
+import {
+  ShippingRate,
+  ShippingRateUnavailableError,
+} from "../src/business/shipping/shipping-rate.port";
+import { CreateShippingQuoteCommand } from "../src/business/shipping/shipping.models";
+import { InvalidBusinessInputError } from "../src/business/business-errors";
+import { TestShippingRateAdapter } from "../src/providers/shipping/test-shipping-rate.adapter";
 
 describe("Shipping business rules with a local provider", () => {
-  let module: TestingModule;
   let service: ShippingQuotesService;
   let adapter: TestShippingRateAdapter;
 
-  beforeEach(async () => {
-    module = await Test.createTestingModule({
-      providers: [
-        ShippingQuotesService, // The REAL service is what we want to test.
-        { provide: SHIPPING_RATE_PROVIDER, useClass: TestShippingRateAdapter },
-      ],
-    }).compile();
-    service = module.get(ShippingQuotesService);
-    adapter = module.get(SHIPPING_RATE_PROVIDER);
+  beforeEach(() => {
+    // No Nest container or application wiring is needed to test our real logic.
+    adapter = new TestShippingRateAdapter();
+    service = new ShippingQuotesService(adapter);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.restoreAllMocks();
-    await module.close();
   });
 
   const command = {
@@ -91,11 +87,58 @@ describe("Shipping business rules with a local provider", () => {
   );
 
   it("propagates a provider failure without silently returning a successful quote", async () => {
-    jest
-      .spyOn(adapter, "getRate")
-      .mockRejectedValueOnce(new Error("Provider unavailable"));
-    await expect(service.createQuote(command)).rejects.toThrow(
-      "Provider unavailable",
-    );
+    const failure = new ShippingRateUnavailableError({
+      cause: new Error("Vendor-specific failure"),
+    });
+    jest.spyOn(adapter, "getRate").mockRejectedValueOnce(failure);
+    await expect(service.createQuote(command)).rejects.toBe(failure);
   });
+
+  it.each([
+    { actorId: " " },
+    { destinationCountry: "ZZ" },
+    { weightGrams: 0 },
+    { weightGrams: 1.5 },
+    { weightGrams: Number.MAX_SAFE_INTEGER + 1 },
+    { orderSubtotalCents: -1 },
+    { orderSubtotalCents: 0.5 },
+    { orderSubtotalCents: Number.MAX_SAFE_INTEGER + 1 },
+  ])(
+    "rejects invalid business input before calling the provider: %j",
+    async (patch) => {
+      const providerCall = jest.spyOn(adapter, "getRate");
+      await expect(
+        service.createQuote({
+          ...command,
+          ...patch,
+        } as CreateShippingQuoteCommand),
+      ).rejects.toBeInstanceOf(InvalidBusinessInputError);
+      expect(providerCall).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { costCents: -1 },
+    { costCents: 1.5 },
+    { costCents: NaN },
+    { costCents: Number.MAX_SAFE_INTEGER },
+    { currency: "CAD" },
+    { estimatedDays: 0 },
+    { carrier: " " },
+  ])(
+    "rejects a broken provider contract instead of pricing a quote: %j",
+    async (patch) => {
+      const rate = await adapter.getRate({
+        destinationCountry: "US",
+        weightGrams: 1500,
+      });
+      // Model an invalid runtime response despite the compile-time port contract.
+      jest
+        .spyOn(adapter, "getRate")
+        .mockResolvedValueOnce({ ...rate, ...patch } as ShippingRate);
+      await expect(service.createQuote(command)).rejects.toBeInstanceOf(
+        ShippingRateUnavailableError,
+      );
+    },
+  );
 });

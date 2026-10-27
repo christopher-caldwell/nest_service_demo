@@ -1,9 +1,8 @@
 import { IsIn, IsInt, Min } from "class-validator";
-import { DestinationCountry } from "../../shipping/shipping-rate.port";
 
 export class CheckoutShippingRequestDto {
   @IsIn(["US", "CA"])
-  destinationCountry!: DestinationCountry;
+  destinationCountry!: "US" | "CA";
 
   @IsInt()
   @Min(1)
