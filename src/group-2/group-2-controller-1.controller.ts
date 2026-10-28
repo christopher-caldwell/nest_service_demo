@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { CurrentActor } from "../auth/current-actor";
 import type { Actor } from "../auth/actor";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { FeatureService } from "../business/group-2/feature.service";
+import { FeatureService } from "./feature.service";
 import {
   Group2Controller1RequestDto,
   Group2Controller1ResponseDto,
-} from "./group-2-controller-1.dto";
+} from "./dto/group-2-controller-1.dto";
 
 @Controller("group-2/controller-1")
 @UseGuards(JwtAuthGuard)

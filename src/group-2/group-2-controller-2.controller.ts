@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { CurrentActor } from "../auth/current-actor";
 import type { Actor } from "../auth/actor";
 import { StaticTokenAuthGuard } from "../auth/static-token-auth.guard";
-import { FeatureService } from "../business/group-2/feature.service";
+import { FeatureService } from "./feature.service";
 import {
   Group2Controller2RequestDto,
   Group2Controller2ResponseDto,
-} from "./group-2-controller-2.dto";
+} from "./dto/group-2-controller-2.dto";
 
 @Controller("group-2/controller-2")
 @UseGuards(StaticTokenAuthGuard)

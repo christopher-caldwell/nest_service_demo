@@ -5,9 +5,9 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { demoConfig } from "../src/auth/demo-config";
-import { SharedService } from "../src/business/group-1/shared.service";
-import { PROVIDER_PORT } from "../src/business/group-2/provider.port";
-import { TestAdapter } from "../src/providers/test.adapter";
+import { SharedService } from "../src/group-1/shared.service";
+import { PROVIDER_PORT } from "../src/group-2/provider.port";
+import { TestAdapter } from "../src/group-2/adapters/test.adapter";
 
 let app: INestApplication;
 let token: string;

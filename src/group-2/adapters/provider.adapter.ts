@@ -1,8 +1,4 @@
-import {
-  ProviderPort,
-  ProviderInput,
-  ProviderOutput,
-} from "../business/group-2/provider.port";
+import { ProviderPort, ProviderInput, ProviderOutput } from "../provider.port";
 
 export class ProviderAdapter implements ProviderPort {
   async fetchValue(input: ProviderInput): Promise<ProviderOutput> {

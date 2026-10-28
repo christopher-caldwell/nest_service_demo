@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { CurrentActor } from "../auth/current-actor";
 import type { Actor } from "../auth/actor";
 import { SessionAuthGuard } from "../auth/session-auth.guard";
-import { SharedService } from "../business/group-1/shared.service";
+import { SharedService } from "./shared.service";
 import {
   Group1Controller2RequestDto,
   Group1Controller2ResponseDto,
-} from "./group-1-controller-2.dto";
+} from "./dto/group-1-controller-2.dto";
 
 @Controller("group-1/controller-2")
 @UseGuards(SessionAuthGuard)

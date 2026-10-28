@@ -1,7 +1,7 @@
 import { ClassProvider } from "@nestjs/common";
-import { PROVIDER_PORT, ProviderPort } from "../business/group-2/provider.port";
-import { ProviderAdapter } from "../providers/provider.adapter";
-import { TestAdapter } from "../providers/test.adapter";
+import { PROVIDER_PORT, ProviderPort } from "./provider.port";
+import { ProviderAdapter } from "./adapters/provider.adapter";
+import { TestAdapter } from "./adapters/test.adapter";
 
 // SWITCH HERE: leave exactly ONE useClass line uncommented, then rebuild/restart.
 export const providerBinding: ClassProvider<ProviderPort> = {

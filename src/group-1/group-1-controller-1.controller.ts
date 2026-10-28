@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { CurrentActor } from "../auth/current-actor";
 import type { Actor } from "../auth/actor";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { SharedService } from "../business/group-1/shared.service";
+import { SharedService } from "./shared.service";
 import {
   Group1Controller1RequestDto,
   Group1Controller1ResponseDto,
-} from "./group-1-controller-1.dto";
+} from "./dto/group-1-controller-1.dto";
 
 @Controller("group-1/controller-1")
 @UseGuards(JwtAuthGuard)

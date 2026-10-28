@@ -20,6 +20,35 @@ npm run demo
 
 Use `npm run start:dev` for automatic restarts. `npm run credentials` prints a JWT, session ID, and static token for manual requests. Demo credentials live in [demo-config.ts](src/auth/demo-config.ts).
 
+## Layout
+
+```text
+src/
+  app.module.ts
+  main.ts
+  auth/                 # Guards, SessionService, auth module
+  group-1/
+    group-1.module.ts
+    group-1-controller-*.controller.ts
+    dto/
+    shared.service.ts
+    shared.models.ts
+  group-2/
+    group-2.module.ts
+    group-2-controller-*.controller.ts
+    dto/
+    feature.service.ts
+    feature.service.spec.ts
+    feature.models.ts
+    provider.port.ts
+    provider.binding.ts  # Toggle the adapter here
+    adapters/
+      provider.adapter.ts
+      test.adapter.ts
+```
+
+Each group is a feature: its module, controllers, DTOs, service, and supporting files live together. The application module imports the two feature modules; both import the auth module.
+
 ## Group 1: different DTOs and auth, one SharedService
 
 | POST route              | Auth         | Request fields                                        |
@@ -36,7 +65,7 @@ Each controller owns its request and response DTOs. Each maps its input to the s
 
 `SharedService` logs the command, sums the values, and returns `{ entityOne, entityTwos }`. Each controller maps both entities to a different response shape. Auth stays in guards; `SessionService` holds the demo session in a Map.
 
-Read [group-1-controller-2.controller.ts](src/controllers/group-1-controller-2.controller.ts) alongside [shared.service.ts](src/business/group-1/shared.service.ts).
+Read [group-1-controller-2.controller.ts](src/group-1/group-1-controller-2.controller.ts) alongside [shared.service.ts](src/group-1/shared.service.ts).
 
 ## Group 2: same FeatureService, different adapters
 
@@ -61,7 +90,7 @@ The service knows only the port. The adapter handles provider-specific fields.
 
 ## Switch adapters
 
-Open **[src/composition/provider.binding.ts](src/composition/provider.binding.ts)** and leave one line uncommented:
+Open **[src/group-2/provider.binding.ts](src/group-2/provider.binding.ts)** and leave one line uncommented:
 
 ```ts
 useClass: TestAdapter, // TEST: local, no provider cost.
@@ -84,4 +113,4 @@ const result = await service.execute({ actorId: "demo-user", value: 5 });
 expect(result.entityOne.total).toBe(20);
 ```
 
-The HTTP test checks all five mappings using real controllers and services. It overrides `PROVIDER_PORT` with `TestAdapter`, keeping provider calls local regardless of the app's selected adapter. Business services are plain TypeScript; Nest wiring lives in `composition/`.
+The HTTP test checks all five mappings using real controllers and services. It overrides `PROVIDER_PORT` with `TestAdapter`, keeping provider calls local regardless of the app's selected adapter. Business services are plain TypeScript; Each feature module wires together its own controllers and services.

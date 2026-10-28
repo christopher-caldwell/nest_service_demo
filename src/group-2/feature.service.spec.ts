@@ -1,5 +1,5 @@
-import { FeatureService } from "../src/business/group-2/feature.service";
-import { TestAdapter } from "../src/providers/test.adapter";
+import { FeatureService } from "./feature.service";
+import { TestAdapter } from "./adapters/test.adapter";
 
 it("runs the real business logic with a local adapter", async () => {
   const service = new FeatureService(new TestAdapter());
