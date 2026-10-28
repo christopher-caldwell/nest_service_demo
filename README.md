@@ -27,35 +27,35 @@ src/
   app.module.ts
   main.ts
   auth/                 # Guards, SessionService, auth module
-  group-1/
-    group-1.module.ts
-    group-1-controller-*.controller.ts
-    dto/
+  shared/
+    shared.module.ts
     shared.service.ts
     shared.models.ts
-  group-2/
-    group-2.module.ts
-    group-2-controller-*.controller.ts
-    dto/
+    controllers/        # jwt, session, token
+    dto/                # jwt, session, token
+  adapter/
+    adapter.module.ts
     feature.service.ts
     feature.service.spec.ts
     feature.models.ts
+    controllers/        # jwt, token
+    dto/                # jwt, token
     provider.port.ts
-    provider.binding.ts  # Toggle the adapter here
+    provider.binding.ts # Toggle the adapter here
     adapters/
       provider.adapter.ts
       test.adapter.ts
 ```
 
-Each group is a feature: its module, controllers, DTOs, service, and supporting files live together. The application module imports the two feature modules; both import the auth module.
+Each feature contains its module, controllers, DTOs, service, and supporting files. The application imports `SharedModule` and `AdapterModule`; both import `AuthModule`.
 
-## Group 1: different DTOs and auth, one SharedService
+## Shared: different DTOs and auth, one SharedService
 
-| POST route              | Auth         | Request fields                                        |
-| ----------------------- | ------------ | ----------------------------------------------------- |
-| `/group-1/controller-1` | JWT          | `name`, `items: [{ code, value }]`                    |
-| `/group-1/controller-2` | Session ID   | `label`, `entries: [{ key, amount }]`                 |
-| `/group-1/controller-3` | Static token | `display_name`, `values: [{ item_code, item_value }]` |
+| POST route        | Auth         | Request fields                                        |
+| ----------------- | ------------ | ----------------------------------------------------- |
+| `/shared/jwt`     | JWT          | `name`, `items: [{ code, value }]`                    |
+| `/shared/session` | Session ID   | `label`, `entries: [{ key, amount }]`                 |
+| `/shared/token`   | Static token | `display_name`, `values: [{ item_code, item_value }]` |
 
 Each controller owns its request and response DTOs. Each maps its input to the same command:
 
@@ -65,19 +65,19 @@ Each controller owns its request and response DTOs. Each maps its input to the s
 
 `SharedService` logs the command, sums the values, and returns `{ entityOne, entityTwos }`. Each controller maps both entities to a different response shape. Auth stays in guards; `SessionService` holds the demo session in a Map.
 
-Read [group-1-controller-2.controller.ts](src/group-1/group-1-controller-2.controller.ts) alongside [shared.service.ts](src/group-1/shared.service.ts).
+Read [session.controller.ts](src/shared/controllers/session.controller.ts) alongside [shared.service.ts](src/shared/shared.service.ts).
 
-## Group 2: same FeatureService, different adapters
+## Adapter: same FeatureService, different adapters
 
-| POST route              | Auth         | Request              | Response                             |
-| ----------------------- | ------------ | -------------------- | ------------------------------------ |
-| `/group-2/controller-1` | JWT          | `{ value: 5 }`       | `{ result: { id, total, parts } }`   |
-| `/group-2/controller-2` | Static token | `{ input_value: 5 }` | `{ result_id, total_value, values }` |
+| POST route       | Auth         | Request              | Response                             |
+| ---------------- | ------------ | -------------------- | ------------------------------------ |
+| `/adapter/jwt`   | JWT          | `{ value: 5 }`       | `{ result: { id, total, parts } }`   |
+| `/adapter/token` | Static token | `{ input_value: 5 }` | `{ result_id, total_value, values }` |
 
 ```text
-Group2Controller1 ─┐
+JwtController ─┐
                   ├─→ FeatureService → ProviderPort
-Group2Controller2 ─┘                        ↑ implements
+TokenController ─┘                        ↑ implements
                                   ProviderAdapter / TestAdapter
 ```
 
@@ -90,7 +90,7 @@ The service knows only the port. The adapter handles provider-specific fields.
 
 ## Switch adapters
 
-Open **[src/group-2/provider.binding.ts](src/group-2/provider.binding.ts)** and leave one line uncommented:
+Open **[src/adapter/provider.binding.ts](src/adapter/provider.binding.ts)** and leave one line uncommented:
 
 ```ts
 useClass: TestAdapter, // TEST: local, no provider cost.
@@ -113,4 +113,4 @@ const result = await service.execute({ actorId: "demo-user", value: 5 });
 expect(result.entityOne.total).toBe(20);
 ```
 
-The HTTP test checks all five mappings using real controllers and services. It overrides `PROVIDER_PORT` with `TestAdapter`, keeping provider calls local regardless of the app's selected adapter. Business services are plain TypeScript; Each feature module wires together its own controllers and services.
+The HTTP test checks all five mappings using real controllers and services. It overrides `PROVIDER_PORT` with `TestAdapter`, keeping provider calls local regardless of the app's selected adapter. Business services are plain TypeScript; each feature module wires together its own controllers and services.

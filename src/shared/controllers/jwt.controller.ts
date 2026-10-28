@@ -1,23 +1,20 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../auth/current-actor";
-import type { Actor } from "../auth/actor";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { SharedService } from "./shared.service";
-import {
-  Group1Controller1RequestDto,
-  Group1Controller1ResponseDto,
-} from "./dto/group-1-controller-1.dto";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
+import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
+import { SharedService } from "../shared.service";
+import { JwtRequestDto, JwtResponseDto } from "../dto/jwt.dto";
 
-@Controller("group-1/controller-1")
+@Controller("shared/jwt")
 @UseGuards(JwtAuthGuard)
-export class Group1Controller1 {
+export class JwtController {
   constructor(private readonly service: SharedService) {}
 
   @Post()
   run(
-    @Body() dto: Group1Controller1RequestDto,
+    @Body() dto: JwtRequestDto,
     @CurrentActor() actor: Actor,
-  ): Group1Controller1ResponseDto {
+  ): JwtResponseDto {
     // Translate this API's input contract into the shared business command.
     const result = this.service.execute({
       actorId: actor.id,

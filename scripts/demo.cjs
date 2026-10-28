@@ -6,17 +6,17 @@ async function main() {
   const auth = credentials();
   const examples = [
     {
-      path: "group-1/controller-1",
+      path: "shared/jwt",
       headers: { Authorization: `Bearer ${auth.jwt}` },
       body: { name: "demo", items: [{ code: "A", value: 2 }] },
     },
     {
-      path: "group-1/controller-2",
+      path: "shared/session",
       headers: { "X-Session-Id": auth.sessionId },
       body: { label: "demo", entries: [{ key: "A", amount: 2 }] },
     },
     {
-      path: "group-1/controller-3",
+      path: "shared/token",
       headers: { "X-Api-Token": auth.staticToken },
       body: {
         display_name: "demo",
@@ -24,12 +24,12 @@ async function main() {
       },
     },
     {
-      path: "group-2/controller-1",
+      path: "adapter/jwt",
       headers: { Authorization: `Bearer ${auth.jwt}` },
       body: { value: 5 },
     },
     {
-      path: "group-2/controller-2",
+      path: "adapter/token",
       headers: { "X-Api-Token": auth.staticToken },
       body: { input_value: 5 },
     },

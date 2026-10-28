@@ -5,9 +5,9 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { demoConfig } from "../src/auth/demo-config";
-import { SharedService } from "../src/group-1/shared.service";
-import { PROVIDER_PORT } from "../src/group-2/provider.port";
-import { TestAdapter } from "../src/group-2/adapters/test.adapter";
+import { SharedService } from "../src/shared/shared.service";
+import { PROVIDER_PORT } from "../src/adapter/provider.port";
+import { TestAdapter } from "../src/adapter/adapters/test.adapter";
 
 let app: INestApplication;
 let token: string;
@@ -29,7 +29,7 @@ it("maps all five DTO contracts through the real services", async () => {
   const shared = jest.spyOn(app.get(SharedService), "execute");
   const examples = [
     {
-      path: "/group-1/controller-1",
+      path: "/shared/jwt",
       header: "Authorization",
       token: `Bearer ${token}`,
       body: { name: "demo", items: [{ code: "A", value: 2 }] },
@@ -44,7 +44,7 @@ it("maps all five DTO contracts through the real services", async () => {
       },
     },
     {
-      path: "/group-1/controller-2",
+      path: "/shared/session",
       header: "X-Session-Id",
       token: demoConfig.sessionId,
       body: { label: "demo", entries: [{ key: "A", amount: 2 }] },
@@ -57,7 +57,7 @@ it("maps all five DTO contracts through the real services", async () => {
       },
     },
     {
-      path: "/group-1/controller-3",
+      path: "/shared/token",
       header: "X-Api-Token",
       token: demoConfig.staticToken,
       body: {
@@ -75,7 +75,7 @@ it("maps all five DTO contracts through the real services", async () => {
       },
     },
     {
-      path: "/group-2/controller-1",
+      path: "/adapter/jwt",
       header: "Authorization",
       token: `Bearer ${token}`,
       body: { value: 5 },
@@ -91,7 +91,7 @@ it("maps all five DTO contracts through the real services", async () => {
       },
     },
     {
-      path: "/group-2/controller-2",
+      path: "/adapter/token",
       header: "X-Api-Token",
       token: demoConfig.staticToken,
       body: { input_value: 5 },

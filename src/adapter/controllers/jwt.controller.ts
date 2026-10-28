@@ -1,23 +1,20 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../auth/current-actor";
-import type { Actor } from "../auth/actor";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { FeatureService } from "./feature.service";
-import {
-  Group2Controller1RequestDto,
-  Group2Controller1ResponseDto,
-} from "./dto/group-2-controller-1.dto";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
+import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
+import { FeatureService } from "../feature.service";
+import { JwtRequestDto, JwtResponseDto } from "../dto/jwt.dto";
 
-@Controller("group-2/controller-1")
+@Controller("adapter/jwt")
 @UseGuards(JwtAuthGuard)
-export class Group2Controller1 {
+export class JwtController {
   constructor(private readonly service: FeatureService) {}
 
   @Post()
   async run(
-    @Body() dto: Group2Controller1RequestDto,
+    @Body() dto: JwtRequestDto,
     @CurrentActor() actor: Actor,
-  ): Promise<Group2Controller1ResponseDto> {
+  ): Promise<JwtResponseDto> {
     const result = await this.service.execute({
       actorId: actor.id,
       value: dto.value,

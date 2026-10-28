@@ -1,23 +1,20 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../auth/current-actor";
-import type { Actor } from "../auth/actor";
-import { SessionAuthGuard } from "../auth/session-auth.guard";
-import { SharedService } from "./shared.service";
-import {
-  Group1Controller2RequestDto,
-  Group1Controller2ResponseDto,
-} from "./dto/group-1-controller-2.dto";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
+import { SessionAuthGuard } from "../../auth/session-auth.guard";
+import { SharedService } from "../shared.service";
+import { SessionRequestDto, SessionResponseDto } from "../dto/session.dto";
 
-@Controller("group-1/controller-2")
+@Controller("shared/session")
 @UseGuards(SessionAuthGuard)
-export class Group1Controller2 {
+export class SessionController {
   constructor(private readonly service: SharedService) {}
 
   @Post()
   run(
-    @Body() dto: Group1Controller2RequestDto,
+    @Body() dto: SessionRequestDto,
     @CurrentActor() actor: Actor,
-  ): Group1Controller2ResponseDto {
+  ): SessionResponseDto {
     const result = this.service.execute({
       actorId: actor.id,
       name: dto.label,

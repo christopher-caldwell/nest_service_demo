@@ -1,23 +1,20 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../auth/current-actor";
-import type { Actor } from "../auth/actor";
-import { StaticTokenAuthGuard } from "../auth/static-token-auth.guard";
-import { FeatureService } from "./feature.service";
-import {
-  Group2Controller2RequestDto,
-  Group2Controller2ResponseDto,
-} from "./dto/group-2-controller-2.dto";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
+import { StaticTokenAuthGuard } from "../../auth/static-token-auth.guard";
+import { FeatureService } from "../feature.service";
+import { TokenRequestDto, TokenResponseDto } from "../dto/token.dto";
 
-@Controller("group-2/controller-2")
+@Controller("adapter/token")
 @UseGuards(StaticTokenAuthGuard)
-export class Group2Controller2 {
+export class TokenController {
   constructor(private readonly service: FeatureService) {}
 
   @Post()
   async run(
-    @Body() dto: Group2Controller2RequestDto,
+    @Body() dto: TokenRequestDto,
     @CurrentActor() actor: Actor,
-  ): Promise<Group2Controller2ResponseDto> {
+  ): Promise<TokenResponseDto> {
     const result = await this.service.execute({
       actorId: actor.id,
       value: dto.input_value,

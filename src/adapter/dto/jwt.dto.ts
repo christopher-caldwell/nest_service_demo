@@ -1,8 +1,8 @@
-export class Group2Controller1RequestDto {
+export class JwtRequestDto {
   value!: number;
 }
 
-export class Group2Controller1ResponseDto {
+export class JwtResponseDto {
   result!: {
     id: string;
     total: number;

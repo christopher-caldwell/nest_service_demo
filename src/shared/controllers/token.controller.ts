@@ -1,23 +1,20 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../auth/current-actor";
-import type { Actor } from "../auth/actor";
-import { StaticTokenAuthGuard } from "../auth/static-token-auth.guard";
-import { SharedService } from "./shared.service";
-import {
-  Group1Controller3RequestDto,
-  Group1Controller3ResponseDto,
-} from "./dto/group-1-controller-3.dto";
+import { CurrentActor } from "../../auth/current-actor";
+import type { Actor } from "../../auth/actor";
+import { StaticTokenAuthGuard } from "../../auth/static-token-auth.guard";
+import { SharedService } from "../shared.service";
+import { TokenRequestDto, TokenResponseDto } from "../dto/token.dto";
 
-@Controller("group-1/controller-3")
+@Controller("shared/token")
 @UseGuards(StaticTokenAuthGuard)
-export class Group1Controller3 {
+export class TokenController {
   constructor(private readonly service: SharedService) {}
 
   @Post()
   run(
-    @Body() dto: Group1Controller3RequestDto,
+    @Body() dto: TokenRequestDto,
     @CurrentActor() actor: Actor,
-  ): Group1Controller3ResponseDto {
+  ): TokenResponseDto {
     const result = this.service.execute({
       actorId: actor.id,
       name: dto.display_name,
@@ -27,7 +24,7 @@ export class Group1Controller3 {
       })),
     });
 
-    // Controller 3's snake_case contract is confined to this controller.
+    // This controller's snake_case contract is confined to this controller.
     return {
       result_id: result.entityOne.id,
       display_name: result.entityOne.name,

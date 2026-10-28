@@ -1,9 +1,9 @@
-export class Group1Controller2RequestDto {
+export class SessionRequestDto {
   label!: string;
   entries!: { key: string; amount: number }[];
 }
 
-export class Group1Controller2ResponseDto {
+export class SessionResponseDto {
   reference!: string;
   label!: string;
   accepted!: boolean;

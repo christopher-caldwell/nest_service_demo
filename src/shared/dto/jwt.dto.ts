@@ -1,9 +1,9 @@
-export class Group1Controller1RequestDto {
+export class JwtRequestDto {
   name!: string;
   items!: { code: string; value: number }[];
 }
 
-export class Group1Controller1ResponseDto {
+export class JwtResponseDto {
   result!: {
     id: string;
     name: string;

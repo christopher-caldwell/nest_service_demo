@@ -1,9 +1,9 @@
-export class Group1Controller3RequestDto {
+export class TokenRequestDto {
   display_name!: string;
   values!: { item_code: string; item_value: number }[];
 }
 
-export class Group1Controller3ResponseDto {
+export class TokenResponseDto {
   result_id!: string;
   display_name!: string;
   state!: string;
