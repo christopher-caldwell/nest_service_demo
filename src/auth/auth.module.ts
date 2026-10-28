@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { demoConfig } from "./demo-config";
-import { JwtAuthGuard } from "./jwt-auth.guard";
-import { SessionAuthGuard } from "./session-auth.guard";
+import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { SessionAuthGuard } from "./guards/session-auth.guard";
 import { SessionService } from "./session.service";
-import { StaticTokenAuthGuard } from "./static-token-auth.guard";
+import { StaticTokenAuthGuard } from "./guards/static-token-auth.guard";
 
 @Module({
   imports: [JwtModule.register({ secret: demoConfig.jwtSecret })],

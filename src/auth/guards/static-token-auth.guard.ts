@@ -4,8 +4,8 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { AuthenticatedRequest } from "./current-actor";
-import { demoConfig } from "./demo-config";
+import { AuthenticatedRequest } from "../types/authenticated-request";
+import { demoConfig } from "../demo-config";
 
 @Injectable()
 export class StaticTokenAuthGuard implements CanActivate {

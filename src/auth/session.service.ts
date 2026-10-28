@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { Actor } from "./actor";
+import type { Actor } from "./types/actor";
 
 @Injectable()
 export class SessionService {

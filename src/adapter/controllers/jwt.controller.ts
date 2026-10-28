@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../../auth/current-actor";
-import type { Actor } from "../../auth/actor";
-import { JwtAuthGuard } from "../../auth/jwt-auth.guard";
+import { CurrentActor } from "../../auth/decorators/current-actor.decorator";
+import type { Actor } from "../../auth/types/actor";
+import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { FeatureService } from "../feature.service";
 import { JwtRequestDto, JwtResponseDto } from "../dto/jwt.dto";
 

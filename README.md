@@ -26,7 +26,13 @@ Use `npm run start:dev` for automatic restarts. `npm run credentials` prints a J
 src/
   app.module.ts
   main.ts
-  auth/                 # Guards, SessionService, auth module
+  auth/
+    auth.module.ts
+    session.service.ts
+    demo-config.ts
+    guards/             # JWT, session, static token
+    decorators/         # @CurrentActor()
+    types/              # Actor and AuthenticatedRequest
   shared/
     shared.module.ts
     shared.service.ts
@@ -89,6 +95,8 @@ TokenController ─┘                        ↑ implements
 The service knows only the port. The adapter handles provider-specific fields.
 
 ## Switch adapters
+
+The token + `useClass` binding is Nest's [custom-provider pattern](https://docs.nestjs.com/fundamentals/custom-providers). The feature module uses `useFactory` to pass that provider into the plain TypeScript service.
 
 Open **[src/adapter/provider.binding.ts](src/adapter/provider.binding.ts)** and leave one line uncommented:
 

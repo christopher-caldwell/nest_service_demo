@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../../auth/current-actor";
-import type { Actor } from "../../auth/actor";
-import { StaticTokenAuthGuard } from "../../auth/static-token-auth.guard";
+import { CurrentActor } from "../../auth/decorators/current-actor.decorator";
+import type { Actor } from "../../auth/types/actor";
+import { StaticTokenAuthGuard } from "../../auth/guards/static-token-auth.guard";
 import { SharedService } from "../shared.service";
 import { TokenRequestDto, TokenResponseDto } from "../dto/token.dto";
 

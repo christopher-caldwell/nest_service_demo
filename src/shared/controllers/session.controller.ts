@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { CurrentActor } from "../../auth/current-actor";
-import type { Actor } from "../../auth/actor";
-import { SessionAuthGuard } from "../../auth/session-auth.guard";
+import { CurrentActor } from "../../auth/decorators/current-actor.decorator";
+import type { Actor } from "../../auth/types/actor";
+import { SessionAuthGuard } from "../../auth/guards/session-auth.guard";
 import { SharedService } from "../shared.service";
 import { SessionRequestDto, SessionResponseDto } from "../dto/session.dto";
 

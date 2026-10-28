@@ -1,8 +1,6 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-import type { Request } from "express";
-import type { Actor } from "./actor";
-
-export type AuthenticatedRequest = Request & { actor: Actor };
+import type { Actor } from "../types/actor";
+import type { AuthenticatedRequest } from "../types/authenticated-request";
 
 export const CurrentActor = createParamDecorator(
   (_data: unknown, context: ExecutionContext): Actor =>
